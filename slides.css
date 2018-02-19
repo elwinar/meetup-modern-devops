@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+
+.remark-slide-content {
+	background: black;
+	color: white;
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 400;
+	padding: 100px;
+	background-position: bottom 40px right 0px;
+	background-repeat: no-repeat;
+	background-size: 100px auto;
+}
+
+.logo {
+	background: white;
+	color: black;
+	padding: 0 100px;
+}
+
+.logo-container > p {
+	display: flex;
+	justify-content: space-around;
+	flex-wrap: wrap;
+}
+
+.logo-container > p > img {
+	max-height: 100px;
+	max-width: 100px;
+	width: 100px;
+	height: auto;
+	padding: 10px 25px;
+}
+
+h1 {
+	font-size: 72px;
+	text-transform: uppercase;
+}
+
+p {
+	font-size: 36px;
+}
