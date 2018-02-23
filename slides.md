@@ -21,7 +21,7 @@ nous les utilisons pour:
 # compiler avec des containers
 
 - pas d'installation locale
-- versions concurrentes
+- versions indépendantes
 - outils embarqués
 
 ---
@@ -31,6 +31,11 @@ nous les utilisons pour:
 - bases de données
 - queue de messages
 - api internes
+
+---
+
+# la théorie
+pourquoi pas un mock ?
 
 ---
 
@@ -106,7 +111,7 @@ services:
   sharmander:
     extends:
       file: ${STO_STDCOMPOSEFILE}
-      service: golang
+      service: golang-1.9
     links:
       - redbeard
     entrypoint: dockerize -timeout 2m -wait tcp://redbeard:3306 entrypoint.sh
@@ -119,7 +124,32 @@ services:
 ---
 
 # la pratique
-bases de données jetables
+
+```
+$ make help
+build                          build the project
+clean                          remove project's dependencies, cache, binaries and ci artifacts
+dist-build                     dist build the project
+down                           shut down docker composition
+help                           print this message
+lint-ci                        lint project's code for ci
+lint                           lint project's code
+prepare-build                  prepare dir for build
+prepare-ci                     prepare dir for ci
+prepare-doc                    prepare dir for doc
+pull                           pull docker composition images
+shell                          run project's shell
+test-ci                        run ci test configuration
+test-fast                      run minimal test configuration
+test-image                     test docker image
+test                           run complete test configuration
+up                             start up docker composition
+```
+
+---
+
+# trucs & astuces
+créer des bases de données à la volée
 
 ```
 func TestPoll_Cold(t *testing.T) {
@@ -133,12 +163,51 @@ func TestPoll_Cold(t *testing.T) {
 }
 ```
 
+---
+
+# trucs & astuces
+controler `time.Now()`
+
 ```
-mysql> show databases;
-+----------------------+
-| Database             |
-+----------------------+
-| ba7bge1tfvsg2tl6mi60 |
-+----------------------+
-12 rows in set (0.01 sec)
+// Monkey patch time.Now to make the poller believes
+// that the current time is the reference time.
+monkey.Patch(time.Now, func() time.Time {
+	return ReferenceTime
+})
+defer monkey.Unpatch(time.Now)
 ```
+
+---
+
+# trucs & astuces
+golden files
+
+```
+t.Run(c.name, func(t *testing.T) {
+	service, clean := NewTestService(t, ...)
+	defer clean()
+
+	out, err := service.generate(c.job)
+	if (err != nil) != c.err {
+		t.Fatalf("unexpected error calling generate: got %v", err)
+	}
+
+	if c.err {
+		return
+	}
+
+	var expected Presentation
+	golden.ReadJSON(t, fmt.Sprintf("%s.json", c.out), &expected, out)
+
+	if !jsonEqual(out, expected) {
+		t.Errorf("unexpected output: %v", ztesting.Diff(out, expected))
+	}
+})
+```
+
+# la suite
+vers l'infini et au-dela
+
+- monodépôt
+- services internes
+- jeu de données global
