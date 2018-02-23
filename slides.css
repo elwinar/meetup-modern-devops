@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+
+.remark-slide-content {
+        background: black;
+        color: white;
+        font-family: 'Open Sans', sans-serif;
+        font-weight: 400;
+        padding: 70px;
+        background-position: bottom 40px right 0px;
+        background-repeat: no-repeat;
+        background-size: 100px auto;
+}
+
+.remark-slide-content h1 {
+        font-size: 48px;
+        text-transform: uppercase;
+}
+
+.remark-slide-content .remark-code {
+	font-size: 12px;
+}
+
+.remark-slide-content p {
+        font-size: 18px;
+}

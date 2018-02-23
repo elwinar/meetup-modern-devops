@@ -2,10 +2,18 @@ class: center, middle
 
 # tester avec des containers
 
+???
+- dire bonjour
+- se présenter
+
 ---
 
 # Synthesio
-quelques chiffres pour faire le malin
+quelques chiffres pour se la péter
+
+???
+- nombre de services à Synthesio
+- volumes de données
 
 ---
 
@@ -16,6 +24,9 @@ nous les utilisons pour:
 - tester
 - ~~deployer~~
 
+???
+- insister sur le contrepied de l'outil
+
 ---
 
 # compiler avec des containers
@@ -23,6 +34,10 @@ nous les utilisons pour:
 - pas d'installation locale
 - versions indépendantes
 - outils embarqués
+
+???
+- pas grand chose de particulier à dire
+- assez répandu
 
 ---
 
@@ -32,10 +47,19 @@ nous les utilisons pour:
 - queue de messages
 - api internes
 
+???
+- le gros du sujet
+- toutes les dépendances dans des containers
+
 ---
 
 # la théorie
 pourquoi pas un mock ?
+
+???
+- il faut faker des données réalistes
+- vérifier la validité des requêtes
+- ignorer les détails d'implémentation
 
 ---
 
@@ -52,13 +76,10 @@ $ tree . -I vendor
 │       ├── service.go
 │       ├── service_test.go
 │       └── testdata
-│           ├── poll_coldest.sql
 │           ├── poll_cold.sql
 │           ├── poll_empty.sql
 │           ├── poll_new.sql
-│           ├── poll_race.sql
-│           ├── poll_warm.sql
-│           └── push.sql
+│           └── poll_race.sql
 ├── CHANGELOG.md
 ├── docker-compose.yml
 ├── Gopkg.lock
@@ -67,6 +88,10 @@ $ tree . -I vendor
 ├── Makefile
 └── README.md
 ```
+
+???
+- présentation générale d'un projet
+- points intéressants: makefile, docker-compose, testdata
 
 ---
 
@@ -99,6 +124,11 @@ $ tree standard/
     └── ...
 ```
 
+???
+- définition de l'interface de compilation
+- regroupement des schémas de base de données
+- définition de containers génériques
+
 ---
 
 # la pratique
@@ -120,6 +150,10 @@ services:
       file: ${STO_STDCOMPOSEFILE}
       service: redbeard
 ```
+
+???
+- linker des services génériques
+- mise à jour automatique
 
 ---
 
@@ -146,6 +180,10 @@ test                           run complete test configuration
 up                             start up docker composition
 ```
 
+???
+- interface de compilation et test
+- cacher les détails
+
 ---
 
 # trucs & astuces
@@ -163,6 +201,12 @@ func TestPoll_Cold(t *testing.T) {
 }
 ```
 
+???
+- nom de base de données aléatoires pour la parallelisation
+- fixtures parsées et chargées automatiquement
+- `testing.T` en paramètre pour la gestion d'erreur
+- `defer clean()` pour nettoyer
+
 ---
 
 # trucs & astuces
@@ -176,6 +220,10 @@ monkey.Patch(time.Now, func() time.Time {
 })
 defer monkey.Unpatch(time.Now)
 ```
+
+???
+- ne pas utiliser `NOW()`
+- avoir un temps de référence dans les fixtures
 
 ---
 
@@ -205,9 +253,23 @@ t.Run(c.name, func(t *testing.T) {
 })
 ```
 
+???
+- "fixtures de sortie"
+- mise à jour automatique via flag
+
 # la suite
 vers l'infini et au-dela
 
 - monodépôt
 - services internes
 - jeu de données global
+
+???
+- idées d'amélioration du système
+
+---
+
+class: center, middle
+
+# questions ?
+
