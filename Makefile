@@ -10,3 +10,7 @@ serve:: ## start the Remarker server on port 6275
 build:: ## build the slides deck in HTML and PDF
 	./node_modules/.bin/remarker build
 	wkhtmltopdf --page-width 111 --page-height 148 -B 0 -L 0 -R 0 -T 0 -O "Landscape" build/index.html build/index.pdf
+
+.PHONY: pkg
+pkg:: ## package the build output into an archive
+	tar -cvzf archive.tgz build/
