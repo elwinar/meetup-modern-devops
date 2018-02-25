@@ -33,13 +33,6 @@ nous les utilisons pour
 ???
 - contrepied de l'usage d'origine du container
 - plus léger que Vagrant (en ressources et en configuration)
-
----
-
-# compiler avec des containers
-environement de travail sur mesure portable
-
-???
 - pas besoin d'installer les outils de compilation en local
 - plusieurs versions concurrentes des outils de compilation
 - outils standards embarqués dans une image custom
@@ -270,14 +263,6 @@ func TestCreate(t *testing.T) {
 - code compliqué, échecs aléatoires
 - avoir un temps de référence simplifie globalement le code
 - les fixtures deviennent plus simples à raisonner
-
----
-
-# trucs & astuces
-~~`select * from table`~~
-
-
-
 
 ---
 
