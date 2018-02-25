@@ -23,3 +23,7 @@
 .remark-slide-content p {
         font-size: 18px;
 }
+
+.hljs-atom-one-dark .hljs {
+	background: none;
+}

@@ -1,1 +1,4 @@
 cssFiles: ['slides.css']
+remarkConfig: {
+  highlightStyle: 'atom-one-dark'
+}

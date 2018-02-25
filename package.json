@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "remark": "^9.0.0",
     "remarker": "^1.5.1"
   }
 }
