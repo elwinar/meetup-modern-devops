@@ -3,53 +3,58 @@ class: center, middle
 # tester avec des containers
 
 ???
-- dire bonjour
-- se présenter
+- bonjour
+- romain, developpeur chez synthesio depuis 2.5 ans
 
 ---
 
 # Synthesio
 quelques chiffres pour se la péter
 
+- ré-écriture en Go depuis 2 ans
+- 35+ services juste en Go
+- quelques services node, java, python
+
 ???
-- nombre de services à Synthesio
-- volumes de données
+- backend entièrement en php (et début de Scala)
+- besoin de sortir une API très très vite, j'ai fait du Go
+- depuis, tout en Go, environ 40 services et api à l'heure actuelle
+- et un peu de node, java, python pour les besoins spécifiques
 
 ---
 
 # les containers à Synthesio
-nous les utilisons pour:
+nous les utilisons pour
 
 - compiler
 - tester
 - ~~deployer~~
 
 ???
-- insister sur le contrepied de l'outil
+- contrepied de l'usage d'origine du container
+- plus léger que Vagrant (en ressources et en configuration)
 
 ---
 
 # compiler avec des containers
-
-- pas d'installation locale
-- versions indépendantes
-- outils embarqués
+environement de travail sur mesure portable
 
 ???
-- pas grand chose de particulier à dire
-- assez répandu
+- pas besoin d'installer les outils de compilation en local
+- plusieurs versions concurrentes des outils de compilation
+- outils standards embarqués dans une image custom
 
 ---
 
-# tester avec des containers
-
-- bases de données
-- queue de messages
-- api internes
+# la théorie
+comme dans les livres, mais en simple
 
 ???
 - le gros du sujet
 - toutes les dépendances dans des containers
+- utiliser ou générer un jeu de données
+- compatible avec des tests unitaires, d'intégration, end-to-end, etc
+- simple à vérifier
 
 ---
 
@@ -57,53 +62,49 @@ nous les utilisons pour:
 pourquoi pas un mock ?
 
 ???
-- il faut faker des données réalistes
-- vérifier la validité des requêtes
-- ignorer les détails d'implémentation
+- pas besoin de connaître les détails d'implémentation
+- pas de code non-fonctionnel
+- compatibilité totale avec la version utilisée
 
 ---
 
 # la pratique
-architecture d'un projet
+docker-compose à la rescousse
 
-```
-$ tree . -I vendor
-.
-├── bin
-│   └── sharmander
-│       ├── config.go
-│       ├── main.go
-│       ├── service.go
-│       ├── service_test.go
-│       └── testdata
-│           ├── poll_cold.sql
-│           ├── poll_empty.sql
-│           ├── poll_new.sql
-│           └── poll_race.sql
-├── CHANGELOG.md
-├── docker-compose.yml
-├── Gopkg.lock
-├── Gopkg.toml
-├── LICENSE
-├── Makefile
-└── README.md
+```yaml
+version: "2.1"
+
+services:
+  sharmander:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: golang-1.9
+    links:
+      - redbeard
+  redbeard:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: redbeard
 ```
 
 ???
-- présentation générale d'un projet
-- points intéressants: makefile, docker-compose, testdata
+- linker des services génériques
+- mise à jour automatique
+- freeze de la version des containers via des alias
 
 ---
 
 # la pratique
 synthesio standard !
 
-```
-$ tree standard/
+```bash
+$ tree .
 .
+├── conda.mk
 ├── docker-compose.yml
 ├── base.mk
 ├── golang.mk
+├── node.mk
 ├── php.mk
 ├── etc
 │   ├── elasticsearch
@@ -125,39 +126,23 @@ $ tree standard/
 ```
 
 ???
-- définition de l'interface de compilation
+- Makefile de base extensible par langage
 - regroupement des schémas de base de données
-- définition de containers génériques
+- définition de containers génériques & configuration
 
 ---
 
 # la pratique
-docker-compose à la rescousse
+one Makefile to rule them all, one Makefile to find them,
 
+```make
+export STO_STDDIRNAME     ?= standard
+export STO_STDPATH        ?= $(realpath $(PWD)/../$(STO_STDDIRNAME))
+export STO_STDMAKEFILE    ?= $(STO_STDPATH)/golang.mk
+export STO_STDCOMPOSEFILE ?= $(STO_STDPATH)/docker-compose.yml
+
+include $(STO_STDMAKEFILE)
 ```
-version: "2.1"
-
-services:
-  sharmander:
-    extends:
-      file: ${STO_STDCOMPOSEFILE}
-      service: golang-1.9
-    links:
-      - redbeard
-    entrypoint: dockerize -timeout 2m -wait tcp://redbeard:3306 entrypoint.sh
-  redbeard:
-    extends:
-      file: ${STO_STDCOMPOSEFILE}
-      service: redbeard
-```
-
-???
-- linker des services génériques
-- mise à jour automatique
-
----
-
-# la pratique
 
 ```
 $ make help
@@ -168,28 +153,26 @@ down                           shut down docker composition
 help                           print this message
 lint-ci                        lint project's code for ci
 lint                           lint project's code
-prepare-build                  prepare dir for build
-prepare-ci                     prepare dir for ci
-prepare-doc                    prepare dir for doc
+prepare-build                  prepare for build
+prepare-ci                     prepare for ci
 pull                           pull docker composition images
 shell                          run project's shell
 test-ci                        run ci test configuration
 test-fast                      run minimal test configuration
-test-image                     test docker image
 test                           run complete test configuration
 up                             start up docker composition
 ```
 
 ???
-- interface de compilation et test
-- cacher les détails
+- commandes standard par langage
+- possibilité d'étendre les cibles par projet
 
 ---
 
 # trucs & astuces
 créer des bases de données à la volée
 
-```
+```go
 func TestPoll_Cold(t *testing.T) {
 	redbeard, clean := mysqltest.Spawn(t, zmysql.NewRedbeard, "redbeard:3306",
 		mysqltest.Fixture{Path: "${STO_STDPATH}/schemas/redbeard-0.2.0.sql"},
@@ -210,27 +193,98 @@ func TestPoll_Cold(t *testing.T) {
 ---
 
 # trucs & astuces
-controler `time.Now()`
+dompter `time.Now()`
 
+```go
+func TestCreate(t *testing.T) {
+	// …
+
+	n := time.Now()
+
+	Create(db, Entity{
+		ID: 1,
+	})
+
+	var res Entity
+	db.Get(&res, `SELECT * FROM entities`)
+
+	if res.CreatedAt.Before(n) || res.CreatedAt.After(time.Now()) {
+		t.Errorf("unexpected created_at: got %v, wanted %v", res.CreatedAt, n)
+	}
+	res.CreatedAt = n
+
+	expected := Entity{
+		ID: 1,
+		CreatedAt: n,
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("unexpected output: got %v, wanted %v", res, expected)
+	}
+
+	// …
+}
 ```
-// Monkey patch time.Now to make the poller believes
-// that the current time is the reference time.
-monkey.Patch(time.Now, func() time.Time {
-	return ReferenceTime
-})
-defer monkey.Unpatch(time.Now)
+
+---
+
+# trucs & astuces
+dompter `time.Now()`
+
+```go
+var ReferenceDate = time.Date(2006, 01, 02, 15, 04, 05, 000, time.UTC)
+
+func init() {
+	monkey.Patch(time.Now, func() time.Time {
+		return ReferenceDate
+	})
+	defer monkey.Unpatch(time.Now)
+}
+
+func TestCreate(t *testing.T) {
+	// …
+
+	Create(db, Entity{
+		ID: 1,
+	})
+
+	var res Entity
+	db.Get(&res, `SELECT * FROM entities`)
+
+	expected := Entity{
+		ID: 1,
+		CreatedAt: ReferenceDate,
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("unexpected output: got %v, wanted %v", res, expected)
+	}
+
+	// …
+}
 ```
 
 ???
-- ne pas utiliser `NOW()`
-- avoir un temps de référence dans les fixtures
+- `NOW()` et `time.Now()` posent des problèmes
+- cas spécial pour gérer les dates qui ne font pas partie de l'input
+- code compliqué, échecs aléatoires
+- avoir un temps de référence simplifie globalement le code
+- les fixtures deviennent plus simples à raisonner
+
+---
+
+# trucs & astuces
+~~`select * from table`~~
+
+
+
 
 ---
 
 # trucs & astuces
 golden files
 
-```
+```go
 t.Run(c.name, func(t *testing.T) {
 	service, clean := NewTestService(t, ...)
 	defer clean()
@@ -245,7 +299,7 @@ t.Run(c.name, func(t *testing.T) {
 	}
 
 	var expected Presentation
-	golden.ReadJSON(t, fmt.Sprintf("%s.json", c.out), &expected, out)
+	golden.ReadJSON(t, c.out, &expected, out)
 
 	if !jsonEqual(out, expected) {
 		t.Errorf("unexpected output: %v", ztesting.Diff(out, expected))
@@ -260,12 +314,11 @@ t.Run(c.name, func(t *testing.T) {
 # la suite
 vers l'infini et au-dela
 
+???
+- idées d'amélioration du système
 - monodépôt
 - services internes
 - jeu de données global
-
-???
-- idées d'amélioration du système
 
 ---
 
