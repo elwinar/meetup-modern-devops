@@ -296,6 +296,8 @@ t.Run(c.name, func(t *testing.T) {
 - "fixtures de sortie"
 - mise à jour automatique via flag
 
+---
+
 # la suite
 vers l'infini et au-dela
 
