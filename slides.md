@@ -87,7 +87,7 @@ func TestShouldUpdateStats(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE products").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectExec("INSERT INTO product_viewers").WithArgs(2, 3).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO product_viewers").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
 	// now we execute our method
@@ -364,4 +364,5 @@ class: center, middle
 background-image: url(assets/riddler.png)
 
 # questions ?
+romain.baugue@elwinar.com
 
