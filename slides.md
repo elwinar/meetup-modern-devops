@@ -9,11 +9,21 @@ class: center, middle
 ---
 
 # Synthesio
-quelques chiffres pour se la péter
+qui sommes nous ?
+
+- plateforme d'analyse sociale
+- enrichissement de documents
+- analyse démographique
+- analyse de sentiment
+
+---
+
+# Synthesio
+coté technique
 
 - ré-écriture en Go depuis 2 ans
-- 35+ services juste en Go
-- quelques services node, java, python
+- ~40 services juste en Go
+- quelques services node, java, python, php
 
 ???
 - backend entièrement en php (et début de Scala)
@@ -39,8 +49,21 @@ nous les utilisons pour
 
 ---
 
+class: bigpicture
+
+![containers](assets/containers.jpg)
+
+---
+
 # la théorie
 comme dans les livres, mais en simple
+
+> A test is not a unit test if:
+> - It talks to the database
+> - It communicates across the network
+> - It touches the file system
+> - It can't run at the same time as any of your other unit tests
+> - You have to do special things to your environment (such as editing config files) to run it. 
 
 ???
 - le gros du sujet
@@ -54,36 +77,35 @@ comme dans les livres, mais en simple
 # la théorie
 pourquoi pas un mock ?
 
+```go
+func TestShouldUpdateStats(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE products").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO product_viewers").WithArgs(2, 3).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	// now we execute our method
+	if err = recordStats(db, 2, 3); err != nil {
+		t.Errorf("error was not expected while updating stats: %s", err)
+	}
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+```
+
 ???
 - pas besoin de connaître les détails d'implémentation
 - pas de code non-fonctionnel
 - compatibilité totale avec la version utilisée
-
----
-
-# la pratique
-docker-compose à la rescousse
-
-```yaml
-version: "2.1"
-
-services:
-  sharmander:
-    extends:
-      file: ${STO_STDCOMPOSEFILE}
-      service: golang-1.9
-    links:
-      - redbeard
-  redbeard:
-    extends:
-      file: ${STO_STDCOMPOSEFILE}
-      service: redbeard
-```
-
-???
-- linker des services génériques
-- mise à jour automatique
-- freeze de la version des containers via des alias
 
 ---
 
@@ -125,6 +147,8 @@ $ tree .
 
 ---
 
+background-image: url(assets/ring.png)
+
 # la pratique
 one Makefile to rule them all, one Makefile to find them,
 
@@ -162,18 +186,75 @@ up                             start up docker composition
 
 ---
 
-# trucs & astuces
-créer des bases de données à la volée
+# la pratique
+docker-compose à la rescousse
+
+```yaml
+version: "2.1"
+
+services:
+  service:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: golang-1.9
+    entrypoint: dockerize -timeout 20s -wait tcp://elasticsearch:9200 -wait tcp://kafka:9092 entrypoint.sh
+    links:
+      - elasticsearch
+      - kafka
+  elasticsearch:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: elasticsearch-2.3
+  kafka:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: kafka-0.10
+    links:
+      - zookeeper
+  zookeeper:
+    extends:
+      file: ${STO_STDCOMPOSEFILE}
+      service: zookeeper-3.4 
+```
+
+???
+- linker des services génériques
+- mise à jour automatique
+- freeze de la version des containers via des alias
+- dépendances complexes
+
+---
+
+# la pratique
+créer des bases de test à la volée
 
 ```go
-func TestPoll_Cold(t *testing.T) {
+func TestService_poll(t *testing.T) {
+	var c Case{
+		Name:    "poll new trigger",
+		Fixture: "poll_new",
+		Out: Trigger{
+			ID:          1,
+			DashboardID: 1,
+		},
+	}
+
 	redbeard, clean := mysqltest.Spawn(t, zmysql.NewRedbeard, "redbeard:3306",
 		mysqltest.Fixture{Path: "${STO_STDPATH}/schemas/redbeard-0.2.0.sql"},
-		mysqltest.Fixture{Path: "poll_cold.sql"},
+		mysqltest.Fixture{Path: "testdata/" + c.Fixture + ".sql"},
 	)
 	defer clean()
 
-	// Add test code here.
+	service := NewService(redbeard)
+	out, err := service.poll()
+
+	if (err != nil) != c.Err || err != c.ErrValue {
+		t.Errorf("unexpected error: got %v", err)
+	}
+
+	if !reflect.DeepEqual(c.Out, out) {
+		t.Errorf("unexpected output: %s", ztesting.Diff(out, c.Out))
+	}
 }
 ```
 
@@ -185,43 +266,7 @@ func TestPoll_Cold(t *testing.T) {
 
 ---
 
-# trucs & astuces
-dompter `time.Now()`
-
-```go
-func TestCreate(t *testing.T) {
-	// …
-
-	n := time.Now()
-
-	Create(db, Entity{
-		ID: 1,
-	})
-
-	var res Entity
-	db.Get(&res, `SELECT * FROM entities`)
-
-	if res.CreatedAt.Before(n) || res.CreatedAt.After(time.Now()) {
-		t.Errorf("unexpected created_at: got %v, wanted %v", res.CreatedAt, n)
-	}
-	res.CreatedAt = n
-
-	expected := Entity{
-		ID: 1,
-		CreatedAt: n,
-	}
-
-	if !reflect.DeepEqual(res, expected) {
-		t.Errorf("unexpected output: got %v, wanted %v", res, expected)
-	}
-
-	// …
-}
-```
-
----
-
-# trucs & astuces
+# la pratique
 dompter `time.Now()`
 
 ```go
@@ -266,8 +311,8 @@ func TestCreate(t *testing.T) {
 
 ---
 
-# trucs & astuces
-golden files
+# la pratique
+golden files, pour les sorties complexes
 
 ```go
 t.Run(c.name, func(t *testing.T) {
@@ -298,8 +343,14 @@ t.Run(c.name, func(t *testing.T) {
 
 ---
 
+background-image: url(assets/buzz.png)
+
 # la suite
 vers l'infini et au-dela
+
+- containers avec les schémas pré-chargés
+- containers avec les services internes
+- jeu de données commun
 
 ???
 - idées d'amélioration du système
@@ -310,6 +361,7 @@ vers l'infini et au-dela
 ---
 
 class: center, middle
+background-image: url(assets/riddler.png)
 
 # questions ?
 

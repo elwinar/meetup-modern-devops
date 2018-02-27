@@ -6,9 +6,13 @@
         font-family: 'Open Sans', sans-serif;
         font-weight: 400;
         padding: 70px;
-        background-position: bottom 40px right 0px;
+        background-position: bottom 40px right 10px;
         background-repeat: no-repeat;
-        background-size: 100px auto;
+        background-size: 75px auto;
+}
+
+.remark-slide-content *:first-child {
+	margin-top: 0;
 }
 
 .remark-slide-content h1 {
@@ -21,7 +25,40 @@
 }
 
 .remark-slide-content p {
-        font-size: 18px;
+        font-size: 22px;
+}
+
+.remark-slide-content.bigpicture {
+	padding: 0;
+}
+
+.remark-slide-content.bigpicture p {
+	margin: 0;
+}
+
+.remark-slide-content.bigpicture .remark-slide-number {
+	display: none;
+}
+
+.remark-slide-content.bigpicture img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+.remark-slide-content blockquote::before, .remark-slide-content blockquote::after {
+	display: block;
+	content: "\201C";
+	font-size: 80px;
+	color: grey;
+	line-height: 0.75;
+}
+
+.remark-slide-content blockquote {
+	color: grey;
+}
+
+.remark-slide-content blockquote *:first-child {
+	margin-top: 0;
 }
 
 .hljs-atom-one-dark .hljs {
